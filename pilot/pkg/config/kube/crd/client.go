@@ -21,8 +21,7 @@ package crd
 import (
 	"fmt"
 	"time"
-	// TODO(nmittler): Remove this
-	_ "github.com/golang/glog"
+
 	multierror "github.com/hashicorp/go-multierror"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -47,9 +46,11 @@ import (
 
 // IstioAPIGroupVersion defines schema.GroupVersion for Istio configuration
 // resources.
+// TODO(xiaolanz) Client can only write to one apiVersion until https://github.com/istio/istio/issues/3586
+// is fully completed.
 var IstioAPIGroupVersion = schema.GroupVersion{
-	Group:   model.IstioAPIGroup,
-	Version: model.IstioAPIVersion,
+	Group:   "config.istio.io",
+	Version: "v1alpha2",
 }
 
 // IstioObject is a k8s wrapper interface for config objects
@@ -155,14 +156,15 @@ func (cl *Client) RegisterResources() error {
 	}
 
 	for _, schema := range cl.descriptor {
-		name := ResourceName(schema.Plural) + "." + model.IstioAPIGroup
+		g := ResourceGroup(&schema)
+		name := ResourceName(schema.Plural) + "." + g
 		crd := &apiextensionsv1beta1.CustomResourceDefinition{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: name,
 			},
 			Spec: apiextensionsv1beta1.CustomResourceDefinitionSpec{
-				Group:   model.IstioAPIGroup,
-				Version: model.IstioAPIVersion,
+				Group:   g,
+				Version: schema.Version,
 				Scope:   apiextensionsv1beta1.NamespaceScoped,
 				Names: apiextensionsv1beta1.CustomResourceDefinitionNames{
 					Plural: ResourceName(schema.Plural),
@@ -181,7 +183,7 @@ func (cl *Client) RegisterResources() error {
 	errPoll := wait.Poll(500*time.Millisecond, 60*time.Second, func() (bool, error) {
 	descriptor:
 		for _, schema := range cl.descriptor {
-			name := ResourceName(schema.Plural) + "." + model.IstioAPIGroup
+			name := ResourceName(schema.Plural) + "." + ResourceGroup(&schema)
 			crd, errGet := clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Get(name, meta_v1.GetOptions{})
 			if errGet != nil {
 				return false, errGet
@@ -225,7 +227,7 @@ func (cl *Client) DeregisterResources() error {
 
 	var errs error
 	for _, schema := range cl.descriptor {
-		name := ResourceName(schema.Plural) + "." + model.IstioAPIGroup
+		name := ResourceName(schema.Plural) + "." + ResourceGroup(&schema)
 		err := clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Delete(name, nil)
 		errs = multierror.Append(errs, err)
 	}

@@ -23,10 +23,8 @@ import (
 
 	"code.cloudfoundry.org/copilot"
 	"github.com/davecgh/go-spew/spew"
-	multierror "github.com/hashicorp/go-multierror"
-	// TODO(nmittler): Remove this
-	_ "github.com/golang/glog"
 	durpb "github.com/golang/protobuf/ptypes/duration"
+	multierror "github.com/hashicorp/go-multierror"
 	"k8s.io/client-go/kubernetes"
 
 	meshconfig "istio.io/api/mesh/v1alpha1"
@@ -164,6 +162,7 @@ type PilotArgs struct {
 	Config           ConfigArgs
 	Service          ServiceArgs
 	Admission        AdmissionArgs
+	RDSv2            bool
 }
 
 // Server contains the runtime configuration for the Pilot discovery service.
@@ -338,7 +337,7 @@ func (s *Server) initKubeClient(args *PilotArgs) error {
 		}
 	}
 
-	if needToCreateClient {
+	if needToCreateClient && args.Config.FileDir == "" {
 		var client kubernetes.Interface
 		var kuberr error
 

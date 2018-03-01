@@ -23,8 +23,6 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/types"
-	// TODO(nmittler): Remove this
-	_ "github.com/golang/glog"
 	"github.com/golang/protobuf/proto"
 
 	mpb "istio.io/api/mixer/v1"
@@ -151,6 +149,8 @@ func Make(namespace string, i int) model.Config {
 	return model.Config{
 		ConfigMeta: model.ConfigMeta{
 			Type:      model.MockConfig.Type,
+			Group:     "config.istio.io",
+			Version:   "v1alpha2",
 			Name:      name,
 			Namespace: namespace,
 			Labels: map[string]string{

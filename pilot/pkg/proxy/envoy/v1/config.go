@@ -25,8 +25,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	// TODO(nmittler): Remove this
-	_ "github.com/golang/glog"
+
 	multierror "github.com/hashicorp/go-multierror"
 
 	meshconfig "istio.io/api/mesh/v1alpha1"
@@ -964,7 +963,7 @@ func buildEgressVirtualHost(serviceName string, destination string,
 	port.Protocol = protocolToHandle
 
 	if mesh.MixerCheckServer != "" || mesh.MixerReportServer != "" {
-		oc := buildMixerConfig(node, serviceName, dest, config, mesh.DisablePolicyChecks, false)
+		oc := buildMixerConfig(node, serviceName, dest, proxyInstances, config, mesh.DisablePolicyChecks, false)
 		for _, route := range routes {
 			route.OpaqueConfig = oc
 		}
